@@ -1,0 +1,65 @@
+﻿DECLARE @in string = "SearchLog.tsv";
+DECLARE @out string = "/output/SearchLog2.csv";
+
+@searchlog =
+    EXTRACT UserId      int,
+            Start       DateTime,
+            Region      string,
+            Query       string,
+            Duration    string,
+            Urls        string,
+            ClickedUrls string
+    FROM @in
+    USING Extractors.Tsv();
+
+// Add new Column to your data and register the new output
+@output1 = 
+    SELECT *,
+           Urls.Length AS UrlsLength  // new column UrlsLength
+    FROM @searchlog;
+
+// Use the new Output as the new source of your data
+// Select logs with duration between 2 minutes and 5 minutes
+@output2 = 
+    SELECT *
+    FROM @output1
+    WHERE int.Parse(Duration) BETWEEN Math.Ceiling(2*60f) AND Math.Ceiling(5*60f);
+
+// Create a calculated column duration in minute taking the duration in secondes multiplied by 60
+@output3 = 
+    SELECT *,
+           Math.Ceiling((float)int.Parse(Duration)/60.0)+((int.Parse(Duration)%60)/100) AS DurationInMin  // new column DurationInMin
+    FROM @output1;
+
+// Create a constant row Set with today date
+// @todayDate = 
+//    SELECT *,
+//           "" AS Now
+//    FROM @output1;
+
+// Select Data with a filter on Start between "2012/02/16" and "2012/02/17"
+@output4 = 
+    SELECT *
+    FROM @output1
+    WHERE Start BETWEEN DateTime.Parse("2012/02/16") AND DateTime.Parse("2012/02/17");
+  
+// Final outputs
+// OUTPUT @newSearchLog
+// TO @out
+// USING Outputters.Csv();
+
+OUTPUT @output1
+TO "/output/output1.Tsv"
+USING Outputters.Tsv();
+
+OUTPUT @output2
+TO "/output/output2.Tsv"
+USING Outputters.Tsv();
+
+OUTPUT @output3
+TO "/output/output3.Tsv"
+USING Outputters.Tsv();
+
+OUTPUT @output4
+TO "/output/output4.Tsv"
+USING Outputters.Tsv();

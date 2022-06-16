@@ -9,6 +9,7 @@
     FROM "/SearchLog.tsv"
     USING Extractors.Tsv();
 
+// Modify row only from GB using WHERE clause
 @q1 =
     SELECT UserId,
            Region,
@@ -20,10 +21,49 @@
     SELECT Urls.Split(',').Length AS UrlNumber
     FROM @searchlog;
 
+// Select value from a inline row set
+@departments = 
+    SELECT *
+    FROM (VALUES
+        (31, "Sales"),
+        (33, "Engineering"),
+        (34, "Clerical"),
+        (35, "Marketing")
+       ) AS D( DepID, DepName );
+
+// Perform a RowSet refinement
+@output = 
+    SELECT *,
+           Urls.Length AS UrlsLength
+    FROM @searchlog;
+
+@output = 
+    SELECT Urls,
+           UrlsLength
+    FROM @output;
+
+// Add column without specifying other rows
+@output =
+    SELECT *,
+           (Query + Query) AS Query2
+    FROM @searchlog;
+
+// Add column specifying other rows
+@output =
+    SELECT Region,
+           Query,
+           (Query + Query) AS Query2,
+           Urls.Length AS UrlsLength
+    FROM @searchlog;
+
 OUTPUT @q1
 TO "/output/RegionFilter.csv"
-USING Outputters.Csv();
+USING Outputters.Csv(quoting:false);  // quoting:false -> deletes "" on strings
 
 OUTPUT @q2
 TO "/output/UrlNumbers.csv"
 USING Outputters.Csv();
+
+OUTPUT @output
+TO "/output/testing.Tsv"
+USING Outputters.Tsv();
