@@ -1,1 +1,29 @@
-﻿
+﻿@searchlog =
+    EXTRACT UserId      int,
+            Start       DateTime,
+            Region      string,
+            Query       string,
+            Duration    int?,
+            Urls        string,
+            ClickedUrls string
+    FROM "/SearchLog.tsv"
+    USING Extractors.Tsv();
+
+@q1 =
+    SELECT UserId,
+           Region,
+           Duration
+    FROM @searchlog
+    WHERE Region == "en-gb";
+
+@q2 =
+    SELECT Urls.Split(',').Length AS UrlNumber
+    FROM @searchlog;
+
+OUTPUT @q1
+TO "/output/RegionFilter.csv"
+USING Outputters.Csv();
+
+OUTPUT @q2
+TO "/output/UrlNumbers.csv"
+USING Outputters.Csv();
